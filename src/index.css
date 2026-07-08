@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cinzel", "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", "Hind Siliguri", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-maroon: #5C151B;
+  --color-brand-terracotta: #8C2D19;
+  --color-brand-gold: #C5A059;
+  --color-brand-cream: #FCF9F5;
+  --color-brand-charcoal: #231F20;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FCF9F5;
+}
+::-webkit-scrollbar-thumb {
+  background: #C5A059;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8C2D19;
+}
+
+body {
+  background-color: #FCF9F5;
+  color: #231F20;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom fade-in utility */
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

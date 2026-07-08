@@ -1,0 +1,6 @@
+{
+  "name": "Shopping Cart",
+  "description": "A premium Bengal-themed fashion reselling platform with a clean terracotta aesthetic, client marketplace, and rich administrative controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
