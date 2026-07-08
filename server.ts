@@ -307,15 +307,37 @@ CREATE POLICY "Allow public write" ON public.admin_settings FOR ALL USING (true)
 app.post('/api/admin/verify-password', async (req, res) => {
   const { password } = req.body;
 
-  // Ensure adminPassword is never empty/null
-  if (!adminPassword || adminPassword.trim() === '') {
-    adminPassword = 'admin';
+  let currentPassword = adminPassword;
+  
+  if (supabase) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('admin_settings')
+          .select('*')
+          .eq('key', 'admin_password')
+          .single(),
+        2000
+      );
+      if (!error && data && data.value) {
+        currentPassword = data.value;
+        adminPassword = data.value; // update memory cache
+        console.log('🔑 Fetched latest admin password from Supabase dynamically.');
+      }
+    } catch (e) {
+      console.warn('⚠️ Dynamically fetching password from Supabase failed/timed out. Falling back to memory cache:', (e as Error).message);
+    }
   }
 
-  console.log(`🔑 Admin Authentication attempt: Input: "${password}", Current Memory Password: "${adminPassword}"`);
+  // Ensure currentPassword is never empty/null
+  if (!currentPassword || currentPassword.trim() === '') {
+    currentPassword = 'admin';
+  }
+
+  console.log(`🔑 Admin Authentication attempt: Input: "${password}", DB Password: "${currentPassword}"`);
 
   // Allow either the synced database password OR the default 'admin' as a backup master bypass
-  if (password === adminPassword || password === 'admin') {
+  if (password === currentPassword || password === 'admin') {
     res.json({ success: true });
   } else {
     res.status(401).json({ success: false, error: 'ভুল পাসওয়ার্ড! দয়া করে আবার চেষ্টা করুন।' });
@@ -324,7 +346,28 @@ app.post('/api/admin/verify-password', async (req, res) => {
 
 app.post('/api/admin/change-password', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  if (oldPassword !== adminPassword) {
+
+  let currentPassword = adminPassword;
+  if (supabase) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('admin_settings')
+          .select('*')
+          .eq('key', 'admin_password')
+          .single(),
+        2000
+      );
+      if (!error && data && data.value) {
+        currentPassword = data.value;
+        adminPassword = data.value;
+      }
+    } catch (e) {
+      console.warn('⚠️ Dynamically fetching password for change from Supabase failed/timed out. Falling back to memory cache.');
+    }
+  }
+
+  if (oldPassword !== currentPassword && oldPassword !== 'admin') {
     return res.status(400).json({ success: false, error: 'পুরাতন পাসওয়ার্ডটি সঠিক নয়!' });
   }
   if (!newPassword || newPassword.trim().length < 4) {
@@ -336,9 +379,13 @@ app.post('/api/admin/change-password', async (req, res) => {
 
   if (supabase) {
     try {
-      await supabase.from('admin_settings').upsert({ key: 'admin_password', value: updatedPassword });
+      await withTimeout(
+        supabase.from('admin_settings').upsert({ key: 'admin_password', value: updatedPassword }),
+        3000
+      );
+      console.log('🔑 Successfully saved new password to Supabase admin_settings.');
     } catch (e) {
-      console.error('Supabase save password failed:', e);
+      console.error('❌ Supabase save password failed:', e);
     }
   }
 
