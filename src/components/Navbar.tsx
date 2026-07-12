@@ -39,9 +39,6 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-40 bg-[#FCF9F5]/90 backdrop-blur-md border-b border-brand-gold/15">
       {/* Announcement Bar */}
-      <div className="bg-brand-maroon text-[#FCF9F5] text-xs py-2 px-4 text-center font-medium tracking-wide">
-        ✨ ফ্রি ডেলিভারি ও ১০% স্পেশাল ডিসকাউন্ট পেতে ব্যবহার করুন কোড: <span className="font-bold text-brand-gold bg-[#FCF9F5]/10 px-1.5 py-0.5 rounded ml-1">BORNO10</span> ✨
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4">

@@ -16,7 +16,6 @@ import ProductCard from './components/ProductCard';
 import ProductDetail from './components/ProductDetail';
 import Cart from './components/Cart';
 import AdminPanel from './components/AdminPanel';
-import AdminPasswordModal from './components/AdminPasswordModal';
 import { apiFetch } from './utils/api';
 
 export default function App() {
@@ -48,7 +47,6 @@ export default function App() {
   const [pressProgress, setPressProgress] = useState(0);
   const [pressTimer, setPressTimer] = useState<any>(null);
   const [progressInterval, setProgressInterval] = useState<any>(null);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const startPress = (e: React.MouseEvent | React.TouchEvent) => {
     setIsPressing(true);
@@ -60,7 +58,8 @@ export default function App() {
     const timer = setTimeout(() => {
       setIsPressing(false);
       setPressProgress(0);
-      setIsPasswordModalOpen(true);
+      setIsAdmin(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       // Try to trigger modern haptic vibration if available on mobile browser
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
@@ -668,16 +667,6 @@ export default function App() {
           WhatsApp চ্যাট
         </span>
       </a>
-
-      {/* Admin Verification Modal */}
-      <AdminPasswordModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onSuccess={() => {
-          setIsAdmin(true);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      />
 
     </div>
   );
