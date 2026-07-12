@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { ShoppingBag, Search, Heart, User, ShieldCheck, ShoppingCart } from 'lucide-react';
-import { CartItem } from '../types';
+import { CartItem, PRODUCT_CATEGORIES } from '../types';
 
 interface NavbarProps {
   cart: CartItem[];
@@ -34,7 +34,7 @@ export default function Navbar({
 }: NavbarProps) {
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const categories = ['সব প্রোডাক্ট', 'শাড়ি', 'পাঞ্জাবি', 'থ্রি-পিস', 'কিডস', 'অ্যাক্সেসরিজ'];
+  const categories = ['সব প্রোডাক্ট', ...PRODUCT_CATEGORIES];
 
   return (
     <header className="sticky top-0 z-40 bg-[#FCF9F5]/90 backdrop-blur-md border-b border-brand-gold/15">

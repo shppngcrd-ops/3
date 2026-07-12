@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, ShieldAlert, X, CheckCircle2 } from 'lucide-react';
+import { apiFetch } from '../utils/api';
 
 interface AdminPasswordModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export default function AdminPasswordModal({ isOpen, onClose, onSuccess }: Admin
     setError(null);
 
     try {
-      const res = await fetch('/api/admin/verify-password', {
+      const res = await apiFetch('/api/admin/verify-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -138,7 +139,7 @@ export default function AdminPasswordModal({ isOpen, onClose, onSuccess }: Admin
                     </button>
                   </div>
                   <span className="text-[10px] text-brand-charcoal/40 block pl-1">
-                    💡 ডেমো পাসওয়ার্ড: <span className="font-bold text-brand-maroon font-mono">admin</span>
+                    💡 ডেমো পাসওয়ার্ড: <span className="font-bold text-brand-maroon font-mono">yasin</span>
                   </span>
                 </div>
 

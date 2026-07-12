@@ -17,6 +17,7 @@ import ProductDetail from './components/ProductDetail';
 import Cart from './components/Cart';
 import AdminPanel from './components/AdminPanel';
 import AdminPasswordModal from './components/AdminPasswordModal';
+import { apiFetch } from './utils/api';
 
 export default function App() {
   // Core API States
@@ -95,9 +96,9 @@ export default function App() {
         setApiError(null);
 
         const [prodRes, ordRes, coupRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/orders'),
-          fetch('/api/coupons'),
+          apiFetch('/api/products'),
+          apiFetch('/api/orders'),
+          apiFetch('/api/coupons'),
         ]);
 
         const [prodData, ordData, coupData] = await Promise.all([
@@ -138,7 +139,7 @@ export default function App() {
   };
 
   // Cart operations
-  const handleAddToCart = (product: Product, size?: string, color?: string) => {
+  const handleAddToCart = (product: Product, size?: string, color?: string, qty: number = 1) => {
     const chosenSize = size || product.size[0] || 'Free Size';
     const chosenColor = color || product.color[0] || 'ডিফল্ট';
 
@@ -151,11 +152,11 @@ export default function App() {
 
     let updatedCart = [...cart];
     if (existingIndex !== -1) {
-      updatedCart[existingIndex].quantity += 1;
+      updatedCart[existingIndex].quantity += qty;
     } else {
       updatedCart.push({
         product,
-        quantity: 1,
+        quantity: qty,
         selectedSize: chosenSize,
         selectedColor: chosenColor,
       });
@@ -165,8 +166,8 @@ export default function App() {
     setIsCartOpen(true);
   };
 
-  const handleInstantBuy = (product: Product, size?: string, color?: string) => {
-    handleAddToCart(product, size, color);
+  const handleInstantBuy = (product: Product, size?: string, color?: string, qty: number = 1) => {
+    handleAddToCart(product, size, color, qty);
   };
 
   const handleUpdateQuantity = (productId: string, size: string, color: string, newQty: number) => {
@@ -211,7 +212,7 @@ export default function App() {
   // Admin APIs Callbacks
   const handleAdminAddProduct = async (prodData: Omit<Product, 'id' | 'rating' | 'reviews' | 'dateAdded'>) => {
     try {
-      const response = await fetch('/api/products', {
+      const response = await apiFetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prodData),
@@ -227,7 +228,7 @@ export default function App() {
 
   const handleAdminEditProduct = async (id: string, updatedFields: Partial<Product>) => {
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await apiFetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFields),
@@ -243,7 +244,7 @@ export default function App() {
 
   const handleAdminDeleteProduct = async (id: string) => {
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await apiFetch(`/api/products/${id}`, {
         method: 'DELETE',
       });
       const result = await response.json();
@@ -257,7 +258,7 @@ export default function App() {
 
   const handleAdminUpdateOrderStatus = async (orderId: string, status: Order['status']) => {
     try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
+      const response = await apiFetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -273,7 +274,7 @@ export default function App() {
 
   const handleAdminAddCoupon = async (couponData: Omit<Coupon, 'id' | 'active'>) => {
     try {
-      const response = await fetch('/api/coupons', {
+      const response = await apiFetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(couponData),
@@ -364,9 +365,9 @@ export default function App() {
           <ProductDetail
             product={selectedProduct}
             onBack={() => setSelectedProduct(null)}
-            onAddToCart={(prod, sz, col) => handleAddToCart(prod, sz, col)}
-            onInstantBuy={(prod, sz, col) => {
-              handleInstantBuy(prod, sz, col);
+            onAddToCart={(prod, sz, col, qty) => handleAddToCart(prod, sz, col, qty)}
+            onInstantBuy={(prod, sz, col, qty) => {
+              handleInstantBuy(prod, sz, col, qty);
               setIsCartOpen(true);
             }}
             allProducts={products}
@@ -393,9 +394,9 @@ export default function App() {
                         setSelectedCategory('সব প্রোডাক্ট');
                         setSearchQuery('');
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold bg-[#FCF9F5] border border-brand-maroon/30 text-brand-maroon hover:bg-brand-maroon hover:text-white transition-all duration-300 shadow-sm"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon hover:border-brand-terracotta transition-all duration-300 shadow-md animate-fadeIn"
                     >
-                      ← সব প্রোডাক্টে ফিরে যান
+                      ← ব্যাক করুন (সব প্রোডাক্টে ফিরে যান)
                     </button>
                   )}
                   <div>
@@ -573,8 +574,8 @@ export default function App() {
       {isWishlistOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div onClick={() => setIsWishlistOpen(false)} className="absolute inset-0 bg-brand-charcoal/40 backdrop-blur-sm" />
-          <div className="absolute inset-y-0 right-0 pl-10 max-w-full flex">
-            <div className="w-screen max-w-md bg-[#FCF9F5] border-l border-brand-gold/15 shadow-2xl flex flex-col h-full">
+          <div className="absolute inset-y-0 right-0 w-full sm:w-auto sm:pl-10 max-w-full flex">
+            <div className="w-full sm:w-screen sm:max-w-md bg-[#FCF9F5] border-l border-brand-gold/15 shadow-2xl flex flex-col h-full">
               
               <div className="px-5 py-5 border-b border-brand-gold/10 bg-brand-maroon text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -584,9 +585,9 @@ export default function App() {
                 </div>
                 <button 
                   onClick={() => setIsWishlistOpen(false)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#FCF9F5]/10 border border-[#FCF9F5]/20 text-[#FCF9F5] hover:bg-[#FCF9F5] hover:text-brand-maroon transition-all duration-300 shadow-sm"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-brand-gold text-brand-maroon hover:bg-[#FCF9F5] hover:text-brand-maroon transition-all duration-300 shadow-sm"
                 >
-                  ← ফিরে যান
+                  ← ব্যাক করুন (ফিরে যান)
                 </button>
               </div>
 

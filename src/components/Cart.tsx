@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Minus, Trash2, Tag, ShoppingBag, Truck, Gift, CheckCircle2, Ticket } from 'lucide-react';
 import { CartItem, Coupon, Order } from '../types';
+import { apiFetch } from '../utils/api';
 
 interface CartProps {
   isOpen: boolean;
@@ -107,7 +108,7 @@ export default function Cart({
     };
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await apiFetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload)
@@ -144,8 +145,8 @@ export default function Cart({
       />
 
       {/* Main Drawer Container */}
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md sm:max-w-lg bg-[#FCF9F5] border-l border-brand-gold/15 shadow-2xl flex flex-col h-full animate-slideIn">
+      <div className="absolute inset-y-0 right-0 w-full sm:w-auto sm:pl-10 max-w-full flex">
+        <div className="w-full sm:w-screen sm:max-w-lg bg-[#FCF9F5] border-l border-brand-gold/15 shadow-2xl flex flex-col h-full animate-slideIn">
           
           {/* Drawer Header */}
           <div className="px-5 py-5 border-b border-brand-gold/10 bg-brand-maroon text-[#FCF9F5] flex items-center justify-between">
@@ -160,9 +161,9 @@ export default function Cart({
             </div>
             <button 
               onClick={onClose}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#FCF9F5]/10 border border-[#FCF9F5]/20 text-[#FCF9F5] hover:bg-[#FCF9F5] hover:text-brand-maroon transition-all duration-300 shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-brand-gold text-brand-maroon hover:bg-[#FCF9F5] hover:text-brand-maroon transition-all duration-300 shadow-sm"
             >
-              ← ফিরে যান
+              ← ব্যাক করুন (ফিরে যান)
             </button>
           </div>
 

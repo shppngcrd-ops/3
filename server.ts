@@ -30,6 +30,17 @@ function withTimeout(promise: Promise<any>, ms = 2500): Promise<any> {
 const app = express();
 const PORT = 3000;
 
+// Enable custom CORS support for external static clients (e.g. Vercel) to interact with API
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Setup JSON body parsing with raised limit for mobile gallery uploads
 app.use(express.json({ limit: '10mb' }));
 
@@ -51,7 +62,7 @@ if (supabaseUrl && supabaseKey) {
 let products: Product[] = [...INITIAL_PRODUCTS];
 let orders: Order[] = [...INITIAL_ORDERS];
 let coupons: Coupon[] = [...INITIAL_COUPONS];
-let adminPassword = 'admin';
+let adminPassword = 'yasin';
 
 // Sync function to load initial tables or check existence and load them
 async function syncFromSupabase() {
@@ -63,25 +74,15 @@ async function syncFromSupabase() {
 
   // 1. Sync admin settings
   try {
-    const { data, error } = await withTimeout(
-      supabase
-        .from('admin_settings')
-        .select('*')
-        .eq('key', 'admin_password')
-        .single()
+    // Force write/upsert yasin as the active password in Supabase admin_settings
+    await withTimeout(
+      supabase.from('admin_settings').upsert({ key: 'admin_password', value: 'yasin' })
     );
-    if (!error && data && data.value) {
-      adminPassword = data.value;
-      console.log('🔑 Loaded admin password from Supabase.');
-    } else if (error && error.code === 'PGRST116') {
-      // Row not found, insert default password
-      await withTimeout(
-        supabase.from('admin_settings').insert({ key: 'admin_password', value: adminPassword })
-      );
-      console.log('🔑 Seeded admin password in Supabase admin_settings.');
-    }
+    adminPassword = 'yasin';
+    console.log('🔑 Force updated/synced admin password as "yasin" in Supabase.');
   } catch (err) {
-    console.warn('⚠️ Supabase admin_settings table sync skipped or failed:', (err as Error).message);
+    adminPassword = 'yasin';
+    console.warn('⚠️ Supabase admin_settings table sync failed, but set local adminPassword to "yasin":', (err as Error).message);
   }
 
   // 2. Sync Products
@@ -331,13 +332,13 @@ app.post('/api/admin/verify-password', async (req, res) => {
 
   // Ensure currentPassword is never empty/null
   if (!currentPassword || currentPassword.trim() === '') {
-    currentPassword = 'admin';
+    currentPassword = 'yasin';
   }
 
   console.log(`🔑 Admin Authentication attempt: Input: "${password}", DB Password: "${currentPassword}"`);
 
-  // Allow either the synced database password OR the default 'admin' as a backup master bypass
-  if (password === currentPassword || password === 'admin') {
+  // Allow either the synced database password OR the default 'yasin' / 'admin' as a backup bypass
+  if (password === currentPassword || password === 'yasin' || password === 'admin') {
     res.json({ success: true });
   } else {
     res.status(401).json({ success: false, error: 'ভুল পাসওয়ার্ড! দয়া করে আবার চেষ্টা করুন।' });
@@ -367,7 +368,7 @@ app.post('/api/admin/change-password', async (req, res) => {
     }
   }
 
-  if (oldPassword !== currentPassword && oldPassword !== 'admin') {
+  if (oldPassword !== currentPassword && oldPassword !== 'yasin' && oldPassword !== 'admin') {
     return res.status(400).json({ success: false, error: 'পুরাতন পাসওয়ার্ডটি সঠিক নয়!' });
   }
   if (!newPassword || newPassword.trim().length < 4) {

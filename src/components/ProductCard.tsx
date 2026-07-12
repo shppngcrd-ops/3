@@ -44,140 +44,51 @@ export default function ProductCard({
     }
   };
 
-  const condBadge = getConditionLabel(product.condition);
-
   return (
-    <div className="group flex flex-col bg-white border border-brand-gold/10 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-brand-gold/30 hover:-translate-y-1">
+    <div 
+      onClick={() => onViewDetails(product)}
+      className="group bg-white border border-brand-gold/10 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 flex flex-col"
+    >
       {/* Product Image Area */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-brand-cream cursor-pointer" onClick={() => onViewDetails(product)}>
+      <div className="relative aspect-[3/4] overflow-hidden bg-brand-cream">
         <img
           src={product.images[0]}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-
-        {/* Badges on Image */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          {product.isNew && (
-            <span className="bg-brand-maroon text-[#FCF9F5] text-[10px] tracking-widest font-bold px-2.5 py-1 rounded-full uppercase shadow-md">
-              নতুন প্রাপ্তি
-            </span>
-          )}
-          {discountPercent > 0 && (
-            <span className="bg-brand-gold text-brand-maroon text-[10px] font-black px-2.5 py-1 rounded-full shadow-md">
-              {discountPercent}% ছাড়
-            </span>
-          )}
-        </div>
-
-        {/* Wishlist Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleWishlist(product);
-          }}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all duration-300 shadow-md ${
-            isWishlisted
-              ? 'bg-brand-terracotta text-white'
-              : 'bg-white/80 hover:bg-white text-brand-charcoal/70 hover:text-brand-terracotta'
-          }`}
-          title={isWishlisted ? 'উইশলিস্ট থেকে বাদ দিন' : 'উইশলিস্টে রাখুন'}
-        >
-          <Heart className="w-4.5 h-4.5" fill={isWishlisted ? 'currentColor' : 'none'} />
-        </button>
-
-        {/* Out of Stock Overlay */}
         {product.stock === 0 && (
-          <div className="absolute inset-0 bg-brand-charcoal/75 backdrop-blur-[2px] flex items-center justify-center p-4">
-            <span className="text-[#FCF9F5] font-bold text-sm tracking-wider uppercase bg-brand-maroon/90 px-4 py-2 rounded border border-brand-gold/20 shadow-md">
-              স্টক শেষ (Sold Out)
+          <div className="absolute inset-0 bg-brand-charcoal/70 backdrop-blur-[1px] flex items-center justify-center p-2">
+            <span className="text-[#FCF9F5] font-bold text-xs tracking-wider uppercase bg-brand-maroon px-3 py-1.5 rounded shadow-md">
+              স্টক শেষ
             </span>
           </div>
         )}
-
-        {/* Hover Actions Bar */}
-        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-brand-charcoal/85 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-between translate-y-2 group-hover:translate-y-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails(product);
-            }}
-            className="flex items-center gap-1 bg-[#FCF9F5] hover:bg-brand-gold text-brand-maroon text-xs font-semibold px-3 py-1.5 rounded-full transition-colors duration-200"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            বিস্তারিত
-          </button>
-          
-          {product.stock > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToCart(product);
-              }}
-              className="flex items-center gap-1 bg-brand-gold hover:bg-brand-maroon hover:text-white text-brand-maroon text-xs font-bold px-3 py-1.5 rounded-full transition-colors duration-200"
-            >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              কার্টে যোগ
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Product Information Area */}
-      <div className="flex-1 p-4 flex flex-col justify-between">
-        <div className="space-y-2">
-          {/* Brand and Condition Badge */}
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-[11px] uppercase tracking-wider font-semibold text-brand-charcoal/50">
-              {product.brand || 'লোকাল ক্রাফট/বুটিক'}
-            </span>
-            <span className={`text-[10px] font-semibold border px-2 py-0.5 rounded-full ${condBadge.color}`}>
-              {condBadge.text}
-            </span>
-          </div>
+      <div className="p-4 flex flex-col justify-between flex-1">
+        <h3 className="text-base font-sans font-extrabold text-brand-charcoal tracking-tight line-clamp-1 uppercase group-hover:text-brand-terracotta transition-colors duration-200">
+          {product.name}
+        </h3>
 
-          {/* Title */}
-          <h3 
-            onClick={() => onViewDetails(product)}
-            className="text-base font-serif font-bold text-brand-charcoal hover:text-brand-terracotta cursor-pointer line-clamp-1 transition-colors duration-200"
-          >
-            {product.name}
-          </h3>
-
-          {/* Rating */}
-          <div className="flex items-center gap-1 text-xs text-brand-charcoal/60">
-            <div className="flex text-amber-400">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="w-3.5 h-3.5"
-                  fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'}
-                />
-              ))}
-            </div>
-            <span className="font-semibold text-brand-charcoal/80 ml-0.5">{product.rating.toFixed(1)}</span>
-            {product.reviews.length > 0 && (
-              <span className="text-[10px] text-brand-charcoal/40">({product.reviews.length} রিভিউ)</span>
-            )}
-          </div>
-        </div>
-
-        {/* Pricing Area */}
-        <div className="pt-3 border-t border-brand-gold/10 mt-3 flex items-end justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-brand-charcoal/40 line-through">
-              মূল মূল্য: ৳{product.originalPrice.toLocaleString('bn-BD')}
-            </span>
-            <span className="text-lg font-bold text-brand-maroon tracking-wide">
-              ৳{product.resellPrice.toLocaleString('bn-BD')}
-            </span>
-          </div>
-
-          <span className="text-[10px] bg-brand-gold/10 text-brand-terracotta border border-brand-gold/20 px-2 py-1 rounded font-medium">
-            সংরক্ষণ: ৳{(product.originalPrice - product.resellPrice).toLocaleString('bn-BD')}
+        <div className="flex items-center justify-between pt-3 mt-1">
+          <span className="text-sm font-medium text-brand-charcoal/60">
+            প্রাইস
+          </span>
+          <span className="text-xl font-black text-[#E11D48] tracking-wider">
+            {toBengaliNumber(product.resellPrice)}
           </span>
         </div>
       </div>
     </div>
   );
+}
+
+// Helper to convert English numbers to Bengali digits
+function toBengaliNumber(num: number | string): string {
+  const englishToBengali: Record<string, string> = {
+    '0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪',
+    '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'
+  };
+  return num.toString().split('').map(char => englishToBengali[char] || char).join('');
 }

@@ -7,10 +7,11 @@ import React, { useState } from 'react';
 import { 
   BarChart3, Plus, Package, ShoppingCart, Percent, Brain, Trash2, Edit3, 
   TrendingUp, AlertTriangle, CheckCircle, RefreshCw, FileText, Send, Copy, ClipboardCheck, Key,
-  X, Image as ImageIcon, Upload, Database
+  X, Image as ImageIcon, Upload, Database, Menu, ChevronRight
 } from 'lucide-react';
-import { Product, Order, Coupon, DashboardMetrics } from '../types';
+import { Product, Order, Coupon, DashboardMetrics, PRODUCT_CATEGORIES } from '../types';
 import { WEEKLY_SALES_HISTORY, CATEGORY_SALES } from '../data/mockData';
+import { apiFetch } from '../utils/api';
 
 interface AdminPanelProps {
   products: Product[];
@@ -37,6 +38,7 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   // Tabs
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'marketing' | 'ai-estimator' | 'security' | 'supabase'>('dashboard');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Change Password Form State
   const [oldPassword, setOldPassword] = useState('');
@@ -59,7 +61,7 @@ export default function AdminPanel({
     setPwdLoading(true);
 
     try {
-      const res = await fetch('/api/admin/change-password', {
+      const res = await apiFetch('/api/admin/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldPassword, newPassword }),
@@ -85,7 +87,7 @@ export default function AdminPanel({
   const [prodBrand, setProdBrand] = useState('');
   const [prodOrigPrice, setProdOrigPrice] = useState('');
   const [prodResPrice, setProdResPrice] = useState('');
-  const [prodCategory, setProdCategory] = useState('শাড়ি');
+  const [prodCategory, setProdCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [prodCondition, setProdCondition] = useState<'like-new' | 'excellent' | 'good' | 'fair'>('like-new');
   const [prodDescription, setProdDescription] = useState('');
   const [prodImageUrl, setProdImageUrl] = useState('');
@@ -105,7 +107,7 @@ export default function AdminPanel({
   const [cpDesc, setCpDesc] = useState('');
 
   // AI Pricing Estimator State
-  const [aiCat, setAiCat] = useState('শাড়ি');
+  const [aiCat, setAiCat] = useState(PRODUCT_CATEGORIES[0]);
   const [aiBrand, setAiBrand] = useState('আড়ং');
   const [aiOrigPrice, setAiOrigPrice] = useState('6000');
   const [aiWearCount, setAiWearCount] = useState('1');
@@ -123,7 +125,7 @@ export default function AdminPanel({
   const fetchSupabaseStatus = async () => {
     setSupabaseLoading(true);
     try {
-      const res = await fetch('/api/supabase-status');
+      const res = await apiFetch('/api/supabase-status');
       const data = await res.json();
       setSupabaseStatus(data);
     } catch (err) {
@@ -234,7 +236,7 @@ export default function AdminPanel({
     setAiCopied(false);
 
     try {
-      const response = await fetch('/api/estimate-price', {
+      const response = await apiFetch('/api/estimate-price', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -268,7 +270,8 @@ export default function AdminPanel({
   };
 
   // Responsive SVG Line Chart Drawing
-  const maxWeeklySales = Math.max(...WEEKLY_SALES_HISTORY.map((h) => h.sales));
+  const rawMaxSales = Math.max(...WEEKLY_SALES_HISTORY.map((h) => h.sales));
+  const maxWeeklySales = rawMaxSales || 1000;
   const svgWidth = 600;
   const svgHeight = 220;
   const padding = 40;
@@ -283,61 +286,168 @@ export default function AdminPanel({
   }).join(' ');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-brand-gold/15 pb-6">
-        <div className="flex-1">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
-            <h1 className="text-2xl sm:text-3xl font-serif font-black text-brand-maroon">
-              বরণ রিসেল এডমিনিস্ট্রেティブ ডেস্ক (Admin)
-            </h1>
+    <div className="w-full min-h-screen bg-[#FCF9F5] py-4 sm:py-8 animate-fadeIn text-brand-charcoal">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        
+        {/* Top Sticky Header for Mobile / Desktop Navigation */}
+        <div className="bg-white border border-brand-gold/15 rounded-3xl p-4 sm:p-6 shadow-md mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-slideIn">
+          <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-serif font-black text-brand-maroon">
+                  বরণ রিসেল এডমিনিস্ট্রেティブ ডেস্ক (Admin)
+                </h1>
+              </div>
+              <p className="text-xs text-brand-charcoal/60">
+                পণ্য ব্যবস্থাপনা, অর্ডার অনুমোদন, ডিসকাউন্ট MARKETING এবং জেমিনি এআই প্রাইসিং অ্যাসিস্ট্যান্ট হাব।
+              </p>
+            </div>
+            
             {onExitAdmin && (
               <button
                 onClick={onExitAdmin}
-                className="self-start sm:self-center flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#FCF9F5] border border-brand-maroon text-brand-maroon hover:bg-brand-maroon hover:text-white transition-all duration-300 shadow-sm"
+                className="self-start sm:self-center flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon hover:border-brand-terracotta transition-all duration-300 shadow-md"
               >
-                ← গ্রাহক মোড (Exit)
+                ← ব্যাক করুন (গ্রাহক মোডে যান)
               </button>
             )}
           </div>
-          <p className="text-xs text-brand-charcoal/60 mt-1">
-            পণ্য ব্যবস্থাপনা, অর্ডার অনুমোদন, ডিসকাউন্ট মার্কেটিং এবং জেমিনি এআই প্রাইসিং অ্যাসিস্ট্যান্ট হাব।
-          </p>
         </div>
-        {/* Admin Navigation Menu Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: 'dashboard', label: 'ড্যাশবোর্ড', icon: BarChart3 },
-            { id: 'products', label: 'ইনভেন্টরি', icon: Package },
-            { id: 'orders', label: 'অর্ডারস', icon: ShoppingCart },
-            { id: 'marketing', label: 'মার্কেটিং', icon: Percent },
-            { id: 'ai-estimator', label: 'জেমিনি AI এস্টিমেটর', icon: Brain },
-            { id: 'security', label: 'সিকিউরিটি', icon: Key },
-            { id: 'supabase', label: 'সুপাবেস ডাটাবেস', icon: Database },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isSelected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all duration-300 ${
-                  isSelected
-                    ? 'bg-brand-maroon border-brand-maroon text-[#FCF9F5] shadow-md'
-                    : 'bg-white border-brand-gold/20 hover:border-brand-terracotta text-brand-charcoal/80'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+
+        {/* Current Active Page Action Indicator & Three Lines Navigation Trigger Bar */}
+        <div className="bg-brand-maroon text-white border border-brand-gold/15 rounded-2xl p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-black bg-brand-gold text-brand-maroon hover:bg-white hover:text-brand-maroon transition-all duration-300 shadow-md animate-pulse shrink-0"
+              title="থ্রি লেন মেনু খুলুন"
+              id="admin-hamburger-btn"
+            >
+              <Menu className="w-5 h-5 text-brand-maroon" />
+              <span>এডমিন মেনু (থ্রি লেন)</span>
+            </button>
+            <div className="h-8 w-[1px] bg-white/20 hidden sm:block" />
+            <div className="text-left">
+              <span className="text-[10px] text-brand-gold uppercase font-bold tracking-widest block">বর্তমান পেইজ:</span>
+              <span className="text-sm font-black text-white flex items-center gap-1.5">
+                {activeTab === 'dashboard' && '📊 ড্যাশবোর্ড'}
+                {activeTab === 'products' && '📦 ইনভেন্টরি'}
+                {activeTab === 'orders' && '🛒 অর্ডারস'}
+                {activeTab === 'marketing' && '🏷️ মার্কেটিং'}
+                {activeTab === 'ai-estimator' && '🧠 জেমিনি AI এস্টিমেটর'}
+                {activeTab === 'security' && '🔑 সিকিউরিটি'}
+                {activeTab === 'supabase' && '🗄️ সুপাবেস ডাটাবেস'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="text-xs text-[#FCF9F5]/80 bg-white/10 px-4 py-2 rounded-xl text-center sm:text-right w-full sm:w-auto font-black">
+            📱 মোবাইল ভিউতে পারফেক্ট ফুল স্ক্রিন লেআউট
+          </div>
         </div>
-      </div>
+
+        {/* ==================== THE TRIPLE LANE / HAMBURGER DRAWER SYSTEM ==================== */}
+        {isMenuOpen && (
+          <div className="fixed inset-0 z-50 overflow-hidden">
+            {/* Dark Blur Overlay */}
+            <div 
+              onClick={() => setIsMenuOpen(false)} 
+              className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-md transition-opacity duration-300"
+            />
+            
+            {/* Sliding Drawer Body */}
+            <div className="absolute inset-y-0 left-0 w-full max-w-sm sm:max-w-md bg-[#FCF9F5] border-r border-brand-gold/15 shadow-2xl flex flex-col h-full animate-slideIn z-50">
+              
+              {/* Drawer Header */}
+              <div className="px-5 py-5 border-b border-brand-gold/10 bg-brand-maroon text-[#FCF9F5] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Menu className="w-5 h-5 text-brand-gold" />
+                  <span className="font-serif font-black text-lg text-brand-gold">বরণ এডমিন মেনু (থ্রি লেন)</span>
+                </div>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-brand-gold text-brand-maroon hover:bg-white hover:text-brand-maroon transition-all duration-300 shadow-sm"
+                  id="admin-drawer-close-btn"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>মেনু বন্ধ করুন</span>
+                </button>
+              </div>
+
+              {/* Drawer Navigation List */}
+              <div className="flex-1 overflow-y-auto py-6 px-4 space-y-3">
+                <p className="text-xs text-brand-charcoal/50 px-2 font-semibold">
+                  নিচের অপশনগুলোতে ক্লিক করলে প্রতিটি পেজ মোবাইলে বা যেকোনো স্ক্রিনে সম্পূর্ণ ফুল স্ক্রিনে ওপেন হবে:
+                </p>
+                
+                {[
+                  { id: 'dashboard', label: 'ড্যাশবোর্ড (Dashboard)', icon: BarChart3, desc: 'সার্বিক বিক্রয়, মোট লাভ এবং অর্ডারের লাইভ পরিসংখ্যান।' },
+                  { id: 'products', label: 'ইনভেন্টরি (Inventory)', icon: Package, desc: 'পণ্য স্টক নিয়ন্ত্রণ, নতুন প্রোডাক্ট যোগ এবং ডিলিট হাব।' },
+                  { id: 'orders', label: 'অর্ডারস (Orders)', icon: ShoppingCart, desc: 'গ্রাহকদের অর্ডার ট্র্যাকিং, অনুমোদন এবং ডেলিভারি স্ট্যাটাস।' },
+                  { id: 'marketing', label: 'মার্কেটিং (Marketing)', icon: Percent, desc: 'ডিসকাউন্ট কুপন তৈরি, অফার প্রচার এবং বিপণন।' },
+                  { id: 'ai-estimator', label: 'জেমিনি AI এস্টিমেটর (AI Estimator)', icon: Brain, desc: 'জেমিনি এআই দিয়ে রিসেল পণ্যের উপযুক্ত বাজার দাম নির্ধারণ।' },
+                  { id: 'security', label: 'সিকিউরিটি (Security)', icon: Key, desc: 'সিক্রেট এডমিন পাসওয়ার্ড পরিবর্তন এবং লক সেটিংস।' },
+                  { id: 'supabase', label: 'সুপাবেস ডাটাবেস (Supabase)', icon: Database, desc: 'রিয়েল-টাইম সুপাবেস ক্লাউড কানেকশন চেক এবং সিঙ্ক হাব।' },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setIsMenuOpen(false);
+                      }}
+                      className={`w-full text-left flex items-start gap-3.5 p-4 rounded-2xl border transition-all duration-300 group ${
+                        isSelected
+                          ? 'bg-brand-maroon border-brand-maroon text-white shadow-md'
+                          : 'bg-white border-brand-gold/10 hover:border-brand-maroon/40 text-brand-charcoal hover:bg-brand-gold/5'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-xl transition-colors duration-300 ${
+                        isSelected ? 'bg-brand-gold/20 text-brand-gold' : 'bg-brand-gold/10 text-brand-maroon group-hover:bg-brand-maroon group-hover:text-white'
+                      }`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-serif font-black text-sm">{tab.label}</span>
+                          <ChevronRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                            isSelected ? 'text-brand-gold' : 'text-brand-maroon'
+                          }`} />
+                        </div>
+                        <p className={`text-[11px] leading-relaxed ${isSelected ? 'text-[#FCF9F5]/70' : 'text-brand-charcoal/60'}`}>
+                          {tab.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-5 border-t border-brand-gold/10 bg-brand-maroon/5 text-center">
+                <span className="text-[10px] text-brand-charcoal/40 font-mono">বরণ এডমিন প্যানেল v2.0 • থ্রি লেন মেনু</span>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* ==================== TAB 1: DASHBOARD ==================== */}
       {activeTab === 'dashboard' && (
         <div className="space-y-8 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
           {/* Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Sales Card */}
@@ -489,7 +599,19 @@ export default function AdminPanel({
 
       {/* ==================== TAB 2: INVENTORY MANAGEMENT ==================== */}
       {activeTab === 'products' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8 animate-fadeIn">
+        <div className="space-y-6 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Add Product Form */}
           <div className="lg:col-span-5 bg-white border border-brand-gold/10 p-5 rounded-2xl shadow-sm h-fit">
@@ -513,18 +635,43 @@ export default function AdminPanel({
                 />
               </div>
 
-              {/* Brand & Category row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">ব্র্যান্ড/উৎস:</label>
-                  <input
-                    type="text"
-                    placeholder="যেমন: আড়ং (Aarong)"
-                    value={prodBrand}
-                    onChange={(e) => setProdBrand(e.target.value)}
-                    className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
-                  />
+              {/* Size List Selection Grid (Replacing Brand/Source) */}
+              <div className="space-y-2 bg-[#FCF9F5]/40 border border-brand-gold/15 p-3 rounded-2xl">
+                <label className="block text-[10px] font-black text-brand-charcoal/70 uppercase tracking-wider flex items-center justify-between">
+                  <span>সাইজ সিলেক্ট করুন (Select Sizes): <span className="text-red-500">*</span></span>
+                  <span className="text-[9px] text-brand-maroon/60 font-bold">একাধিক সাইজ বেছে নিতে পারেন</span>
+                </label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-[140px] overflow-y-auto pr-1 no-scrollbar">
+                  {['M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', 'S', 'XS', 'Free Size', '32', '34', '36', '38', '40', '42', '44', '46'].map((sz) => {
+                    const isSelected = prodSize.split(',').map(s => s.trim()).includes(sz);
+                    return (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => {
+                          let arr = prodSize.split(',').map(s => s.trim()).filter(Boolean);
+                          if (arr.includes(sz)) {
+                            arr = arr.filter(s => s !== sz);
+                          } else {
+                            arr.push(sz);
+                          }
+                          setProdSize(arr.join(', '));
+                        }}
+                        className={`py-1.5 px-1 text-[11px] font-black rounded-lg border transition-all text-center ${
+                          isSelected 
+                            ? 'bg-brand-maroon text-[#FCF9F5] border-brand-maroon shadow-sm' 
+                            : 'bg-white text-brand-charcoal/80 border-brand-gold/15 hover:border-brand-maroon/30 hover:bg-brand-cream/20'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              {/* Category & Brand/Source Row */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">ক্যাটাগরি: <span className="text-red-500">*</span></label>
                   <select
@@ -532,12 +679,20 @@ export default function AdminPanel({
                     onChange={(e) => setProdCategory(e.target.value)}
                     className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
                   >
-                    <option value="শাড়ি">শাড়ি (Saree)</option>
-                    <option value="পাঞ্জাবি">পাঞ্জাবি (Panjabi)</option>
-                    <option value="থ্রি-পিস">থ্রি-পিস (Salwar Kameez)</option>
-                    <option value="কিডস">কিডস (Kids Wear)</option>
-                    <option value="অ্যাক্সেসরিজ">অ্যাক্সেসরিজ (Accessories)</option>
+                    {PRODUCT_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">ব্র্যান্ড/উৎস (ঐচ্ছিক):</label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: আড়ং (Aarong)"
+                    value={prodBrand}
+                    onChange={(e) => setProdBrand(e.target.value)}
+                    className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
+                  />
                 </div>
               </div>
 
@@ -594,26 +749,17 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Size & Color details */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">সাইজ (Sizes - কমা দিয়ে পৃথক করুন):</label>
-                  <input
-                    type="text"
-                    value={prodSize}
-                    onChange={(e) => setProdSize(e.target.value)}
-                    className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">রং (Colors - কমা দিয়ে পৃথক করুন):</label>
-                  <input
-                    type="text"
-                    value={prodColor}
-                    onChange={(e) => setProdColor(e.target.value)}
-                    className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
-                  />
-                </div>
+              {/* Color details */}
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-brand-charcoal/60 uppercase">রং (Colors - কমা দিয়ে পৃথক করুন): <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  value={prodColor}
+                  onChange={(e) => setProdColor(e.target.value)}
+                  className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2"
+                  placeholder="যেমন: মেরুন, গোল্ডেন, কালো"
+                />
               </div>
 
               {/* Product Image Selection */}
@@ -736,7 +882,14 @@ export default function AdminPanel({
                       </div>
                       <div className="max-w-[150px]">
                         <h4 className="font-serif font-extrabold text-brand-charcoal truncate" title={p.name}>{p.name}</h4>
-                        <span className="text-[9px] uppercase font-semibold text-brand-charcoal/40">{p.brand}</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {p.brand && p.brand !== 'Unknown' && p.brand !== 'লোকাল বুটিক/বুননশিল্পী' && (
+                            <span className="text-[8px] uppercase font-semibold text-brand-charcoal/50 bg-gray-100 px-1 rounded">{p.brand}</span>
+                          )}
+                          {p.size && p.size.length > 0 && p.size.map(sz => (
+                            <span key={sz} className="text-[8px] font-black text-brand-maroon bg-brand-gold/15 px-1 rounded">{sz}</span>
+                          ))}
+                        </div>
                       </div>
                     </td>
                     <td className="py-3.5 px-2">
@@ -801,11 +954,24 @@ export default function AdminPanel({
             </table>
           </div>
         </div>
+        </div>
       )}
 
       {/* ==================== TAB 3: ORDERS MANAGEMENT ==================== */}
       {activeTab === 'orders' && (
-        <div className="bg-white border border-brand-gold/10 p-5 rounded-2xl shadow-sm mt-8 overflow-x-auto no-scrollbar animate-fadeIn">
+        <div className="space-y-6 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
+          <div className="bg-white border border-brand-gold/10 p-5 rounded-2xl shadow-sm overflow-x-auto no-scrollbar">
           <h3 className="text-base font-serif font-bold text-brand-charcoal border-b border-brand-gold/10 pb-3">
             গ্রাহকদের লাইভ অর্ডার তালিকা এবং শিপমেন্ট ট্র্যাকিং ({orders.length})
           </h3>
@@ -897,11 +1063,24 @@ export default function AdminPanel({
             </tbody>
           </table>
         </div>
+        </div>
       )}
 
       {/* ==================== TAB 4: MARKETING (COUPONS) ==================== */}
       {activeTab === 'marketing' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8 animate-fadeIn">
+        <div className="space-y-6 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Create Coupon form */}
           <div className="lg:col-span-5 bg-white border border-brand-gold/10 p-5 rounded-2xl shadow-sm h-fit">
@@ -994,11 +1173,24 @@ export default function AdminPanel({
             </div>
           </div>
         </div>
+        </div>
       )}
 
       {/* ==================== TAB 5: GEMINI AI ESTIMATOR ==================== */}
       {activeTab === 'ai-estimator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8 animate-fadeIn">
+        <div className="space-y-6 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Form Side */}
           <div className="lg:col-span-5 bg-white border border-brand-gold/10 p-5 rounded-2xl shadow-sm h-fit">
@@ -1026,11 +1218,9 @@ export default function AdminPanel({
                   onChange={(e) => setAiCat(e.target.value)}
                   className="w-full bg-[#FCF9F5] border border-brand-gold/20 focus:border-brand-terracotta focus:outline-none rounded-xl px-3 py-2.5"
                 >
-                  <option value="শাড়ি">শাড়ি (Saree)</option>
-                  <option value="পাঞ্জাবি">পাঞ্জাবি (Panjabi)</option>
-                  <option value="থ্রি-পিস">থ্রি-পিস (Salwar Kameez)</option>
-                  <option value="কিডস">কিডস (Kids Wear)</option>
-                  <option value="অ্যাক্সেসরিজ">অ্যাক্সেসরিজ (Accessories)</option>
+                  {PRODUCT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
 
@@ -1149,10 +1339,23 @@ export default function AdminPanel({
             )}
           </div>
         </div>
+        </div>
       )}
 
       {activeTab === 'security' && (
-        <div className="max-w-md mx-auto mt-8 bg-white border border-brand-gold/15 p-6 rounded-2xl shadow-sm space-y-6 animate-fadeIn">
+        <div className="space-y-6 mt-8 animate-fadeIn">
+          {/* Back/Menu Navigation Quick Toggle */}
+          <div className="flex items-center gap-2 max-w-md mx-auto">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black bg-brand-maroon text-[#FCF9F5] hover:bg-brand-terracotta border border-brand-maroon transition-all duration-300 shadow-md group"
+            >
+              <Menu className="w-4 h-4 text-brand-gold animate-pulse" />
+              ← ব্যাক করুন (অন্য পেইজে যেতে এডমিন মেনু থ্রি লেন খুলুন)
+            </button>
+          </div>
+
+          <div className="max-w-md mx-auto bg-white border border-brand-gold/15 p-6 rounded-2xl shadow-sm space-y-6">
           <div className="border-b border-brand-gold/10 pb-3 text-center">
             <div className="w-12 h-12 bg-brand-maroon/5 border border-brand-gold/25 rounded-full flex items-center justify-center text-brand-maroon mx-auto mb-2">
               <Key className="w-5 h-5" />
@@ -1229,6 +1432,7 @@ export default function AdminPanel({
               )}
             </button>
           </form>
+        </div>
         </div>
       )}
 
@@ -1340,5 +1544,6 @@ export default function AdminPanel({
       )}
 
     </div>
-  );
+  </div>
+);
 }
