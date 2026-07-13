@@ -41,8 +41,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Setup JSON body parsing with raised limit for mobile gallery uploads
-app.use(express.json({ limit: '10mb' }));
+// Setup JSON body parsing with raised limit for mobile gallery uploads (set to 200MB)
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || 'https://aeraskiutdmysilybknc.supabase.co';

@@ -149,15 +149,48 @@ export default function AdminPanel({
   const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
   const lowStockCount = products.filter((p) => p.stock === 0).length;
 
-  // Handles direct gallery image selection
+  // Handles direct gallery image selection with high-efficiency client-side compression
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setProdImageUrl(reader.result);
-        }
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Downscale to max 1200px width/height to look crisp yet stay under 200KB
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress to JPEG with 0.75 quality for beautiful detail at extremely low file size
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            setProdImageUrl(compressedDataUrl);
+          } else {
+            if (typeof reader.result === 'string') {
+              setProdImageUrl(reader.result);
+            }
+          }
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
