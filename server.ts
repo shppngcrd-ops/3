@@ -319,25 +319,25 @@ DROP POLICY IF EXISTS "Allow public read" ON public.products;
 CREATE POLICY "Allow public read" ON public.products FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Allow public write" ON public.products;
-CREATE POLICY "Allow public write" ON public.products FOR ALL USING (true);
+CREATE POLICY "Allow public write" ON public.products FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow public read" ON public.orders;
 CREATE POLICY "Allow public read" ON public.orders FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Allow public write" ON public.orders;
-CREATE POLICY "Allow public write" ON public.orders FOR ALL USING (true);
+CREATE POLICY "Allow public write" ON public.orders FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow public read" ON public.coupons;
 CREATE POLICY "Allow public read" ON public.coupons FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Allow public write" ON public.coupons;
-CREATE POLICY "Allow public write" ON public.coupons FOR ALL USING (true);
+CREATE POLICY "Allow public write" ON public.coupons FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow public read" ON public.admin_settings;
 CREATE POLICY "Allow public read" ON public.admin_settings FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Allow public write" ON public.admin_settings;
-CREATE POLICY "Allow public write" ON public.admin_settings FOR ALL USING (true);
+CREATE POLICY "Allow public write" ON public.admin_settings FOR ALL USING (true) WITH CHECK (true);
     `
   };
 
