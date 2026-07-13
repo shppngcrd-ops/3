@@ -46,12 +46,15 @@ export default function Navbar({
           {/* Logo */}
           <div 
             onClick={() => { setSelectedCategory('সব প্রোডাক্ট'); setIsAdmin(false); }}
-            className="flex-shrink-0 cursor-pointer flex flex-col"
+            className="flex-shrink-0 cursor-pointer flex flex-col justify-center"
           >
-            <h1 className="text-2xl sm:text-3xl font-serif font-extrabold tracking-tight text-brand-maroon leading-tight">
-              বরণ <span className="text-brand-gold font-sans font-medium text-lg sm:text-xl ml-1 tracking-widest">RESELL</span>
+            <span className="text-[9px] sm:text-[10px] text-brand-charcoal/60 uppercase tracking-[0.2em] font-semibold leading-none mb-1">
+              MD YASIN AHMED
+            </span>
+            <h1 className="text-xl sm:text-2xl font-serif font-extrabold tracking-tight text-brand-maroon leading-none">
+              SHOPPING <span className="text-brand-gold font-sans font-medium text-lg sm:text-xl ml-0.5 tracking-widest">CART</span>
             </h1>
-            <span className="text-[10px] text-brand-charcoal/60 uppercase tracking-widest -mt-1 font-medium">
+            <span className="text-[9px] text-brand-charcoal/50 uppercase tracking-widest mt-1 font-medium">
               Premium Pre-Loved Fashion
             </span>
           </div>

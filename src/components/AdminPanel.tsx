@@ -17,9 +17,9 @@ interface AdminPanelProps {
   products: Product[];
   orders: Order[];
   coupons: Coupon[];
-  onAddProduct: (newProduct: Omit<Product, 'id' | 'rating' | 'reviews' | 'dateAdded'>) => void;
-  onEditProduct: (id: string, updatedProduct: Partial<Product>) => void;
-  onDeleteProduct: (id: string) => void;
+  onAddProduct: (newProduct: Omit<Product, 'id' | 'rating' | 'reviews' | 'dateAdded'>) => Promise<{ success: boolean; error?: string }>;
+  onEditProduct: (id: string, updatedProduct: Partial<Product>) => Promise<{ success: boolean; error?: string }>;
+  onDeleteProduct: (id: string) => Promise<{ success: boolean; error?: string }>;
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   onAddCoupon: (newCoupon: Omit<Coupon, 'id' | 'active'>) => void;
   onExitAdmin?: () => void;
@@ -163,8 +163,10 @@ export default function AdminPanel({
     }
   };
 
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+
   // Handles Adding Product
-  const handleCreateProductSubmit = (e: React.FormEvent) => {
+  const handleCreateProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prodName || !prodOrigPrice || !prodResPrice) {
       alert('দয়া করে সমস্ত প্রয়োজনীয় ফিল্ড পূরণ করুন!');
@@ -174,29 +176,40 @@ export default function AdminPanel({
     // Elegant fallback traditional background placeholder in case no image is provided
     const finalImageUrl = prodImageUrl.trim() || 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80';
 
-    onAddProduct({
-      name: prodName,
-      brand: prodBrand || 'Unknown',
-      originalPrice: Number(prodOrigPrice),
-      resellPrice: Number(prodResPrice),
-      category: prodCategory,
-      condition: prodCondition,
-      description: prodDescription || 'সুন্দর প্রিমিয়াম প্রোডাক্ট।',
-      images: [finalImageUrl],
-      size: prodSize.split(',').map((s) => s.trim()),
-      color: prodColor.split(',').map((c) => c.trim()),
-      stock: Number(prodStock),
-      sellerName: prodSeller,
-    });
+    setIsAddingProduct(true);
+    try {
+      const result = await onAddProduct({
+        name: prodName,
+        brand: prodBrand || 'Unknown',
+        originalPrice: Number(prodOrigPrice),
+        resellPrice: Number(prodResPrice),
+        category: prodCategory,
+        condition: prodCondition,
+        description: prodDescription || 'সুন্দর প্রিমিয়াম প্রোডাক্ট।',
+        images: [finalImageUrl],
+        size: prodSize.split(',').map((s) => s.trim()),
+        color: prodColor.split(',').map((c) => c.trim()),
+        stock: Number(prodStock),
+        sellerName: prodSeller,
+      });
 
-    // Clear Form
-    setProdName('');
-    setProdBrand('');
-    setProdOrigPrice('');
-    setProdResPrice('');
-    setProdImageUrl('');
-    setProdDescription('');
-    alert('অভিনন্দন! রিসেল পণ্যটি সফলভাবে ক্যাটালগে যুক্ত হয়েছে।');
+      if (result.success) {
+        // Clear Form on success
+        setProdName('');
+        setProdBrand('');
+        setProdOrigPrice('');
+        setProdResPrice('');
+        setProdImageUrl('');
+        setProdDescription('');
+        alert('অভিনন্দন! রিসেল পণ্যটি সফলভাবে ক্যাটালগে যুক্ত হয়েছে।');
+      } else {
+        alert(`পণ্য যুক্ত করতে ব্যর্থ হয়েছে:\n${result.error || 'অজানা ত্রুটি'}`);
+      }
+    } catch (err: any) {
+      alert(`পণ্য যুক্ত করতে সমস্যা হয়েছে:\n${err.message || err}`);
+    } finally {
+      setIsAddingProduct(false);
+    }
   };
 
   // Handles Editing Product Price/Stock
@@ -849,9 +862,21 @@ export default function AdminPanel({
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-brand-gold hover:bg-[#B38F4B] text-brand-maroon font-bold py-3 px-4 rounded-xl shadow-md transition-colors duration-200"
+                disabled={isAddingProduct}
+                className={`w-full text-brand-maroon font-bold py-3 px-4 rounded-xl shadow-md transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  isAddingProduct 
+                    ? 'bg-brand-gold/50 cursor-not-allowed' 
+                    : 'bg-brand-gold hover:bg-[#B38F4B]'
+                }`}
               >
-                ক্যাটালগে আপলোড করুন
+                {isAddingProduct ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    আপলোড করা হচ্ছে...
+                  </>
+                ) : (
+                  'ক্যাটালগে আপলোড করুন'
+                )}
               </button>
             </form>
           </div>

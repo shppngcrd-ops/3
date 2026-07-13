@@ -243,9 +243,13 @@ export default function App() {
       const result = await response.json();
       if (result.success) {
         setProducts([result.data, ...products]);
+        return { success: true };
+      } else {
+        return { success: false, error: result.error || 'পণ্য আপলোড করতে সমস্যা হয়েছে।' };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding product:', err);
+      return { success: false, error: err.message || 'নেটওয়ার্ক কানেকশন এরর।' };
     }
   };
 
@@ -259,9 +263,13 @@ export default function App() {
       const result = await response.json();
       if (result.success) {
         setProducts(products.map((p) => (p.id === id ? result.data : p)));
+        return { success: true };
+      } else {
+        return { success: false, error: result.error || 'পণ্য আপডেট করতে সমস্যা হয়েছে।' };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating product:', err);
+      return { success: false, error: err.message || 'নেটওয়ার্ক কানেকশন এরর।' };
     }
   };
 
@@ -273,9 +281,13 @@ export default function App() {
       const result = await response.json();
       if (result.success) {
         setProducts(products.filter((p) => p.id !== id));
+        return { success: true };
+      } else {
+        return { success: false, error: result.error || 'পণ্য ডিলিট করতে সমস্যা হয়েছে।' };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting product:', err);
+      return { success: false, error: err.message || 'নেটওয়ার্ক কানেকশন এরর।' };
     }
   };
 
@@ -326,6 +338,8 @@ export default function App() {
 
     return matchesCategory && matchesSearch;
   });
+
+  const isAllProductsPage = !isAdmin && !selectedProduct && (selectedCategory === 'সব প্রোডাক্ট' || selectedCategory === '') && !searchQuery;
 
   return (
     <div className="min-h-screen bg-[#FCF9F5] flex flex-col justify-between">
@@ -404,10 +418,12 @@ export default function App() {
           <div className="space-y-12">
             
             {/* Hero Auto-Slider Banner */}
-            <Hero onCategorySelect={(cat) => setSelectedCategory(cat)} />
+            {isAllProductsPage && (
+              <Hero onCategorySelect={(cat) => setSelectedCategory(cat)} />
+            )}
 
             {/* Catalog Grid Area */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+            <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 ${!isAllProductsPage ? 'pt-8' : ''}`}>
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-brand-gold/15 pb-4 mb-8 gap-3">
                 <div className="flex flex-wrap items-center gap-3">
@@ -460,30 +476,37 @@ export default function App() {
             </div>
 
             {/* Elegant Brand Slogan Section */}
-            <section className="bg-brand-maroon text-[#FCF9F5] py-16 px-4">
-              <div className="max-w-3xl mx-auto text-center space-y-4">
-                <h3 className="text-lg uppercase tracking-widest text-brand-gold font-bold">আমাদের মূল লক্ষ্য</h3>
-                <p className="text-xl sm:text-2xl font-serif font-light leading-relaxed">
-                  "বরণ রিসেল - পরিবেশবান্ধব উপায়ে ও সাশ্রয়ী মূল্যে আভিজাত্যময় প্রি-লাভড পোশাক ও অ্যাক্সেসরিজ পৌঁছে দিচ্ছে সবার কাছে।"
-                </p>
-                <div className="text-xs text-[#FCF9F5]/60">স্বচ্ছতা ও আভিজাত্যের বিশ্বস্ত মেলবন্ধন</div>
-              </div>
-            </section>
+            {isAllProductsPage && (
+              <section className="bg-brand-maroon text-[#FCF9F5] py-16 px-4">
+                <div className="max-w-3xl mx-auto text-center space-y-4">
+                  <h3 className="text-lg uppercase tracking-widest text-brand-gold font-bold">আমাদের মূল লক্ষ্য</h3>
+                  <p className="text-xl sm:text-2xl font-serif font-light leading-relaxed">
+                    "বরণ রিসেল - পরিবেশবান্ধব উপায়ে ও সাশ্রয়ী মূল্যে আভিজাত্যময় প্রি-লাভড পোশাক ও অ্যাক্সেসরিজ পৌঁছে দিচ্ছে সবার কাছে।"
+                  </p>
+                  <div className="text-xs text-[#FCF9F5]/60">স্বচ্ছতা ও আভিজাত্যের বিশ্বস্ত মেলবন্ধন</div>
+                </div>
+              </section>
+            )}
 
           </div>
         )}
       </main>
 
       {/* FOOTER AREA */}
-      {!isAdmin && (
+      {isAllProductsPage && (
         <footer className="bg-white border-t border-brand-gold/15 pt-16 pb-8 text-xs text-brand-charcoal/70">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             
             {/* Col 1: Borno Info */}
             <div className="space-y-4">
-              <h4 className="text-lg font-serif font-extrabold text-brand-maroon">
-                বরণ <span className="text-brand-gold font-sans font-medium text-sm ml-0.5 tracking-widest">RESELL</span>
-              </h4>
+              <div className="flex flex-col">
+                <span className="text-[9px] text-brand-charcoal/60 uppercase tracking-[0.2em] font-semibold leading-none mb-1">
+                  MD YASIN AHMED
+                </span>
+                <h4 className="text-lg font-serif font-extrabold text-brand-maroon leading-tight">
+                  SHOPPING <span className="text-brand-gold font-sans font-medium text-sm ml-0.5 tracking-widest">CART</span>
+                </h4>
+              </div>
               <p className="leading-relaxed font-light">
                 বরণ রিসেল হলো বাংলাদেশের শীর্ষস্থানীয় প্রি-লাভড ও রিসেলিং ফ্যাশন প্ল্যাটফর্ম। দেশীয় ঐতিহ্যবাহী জামদানি, সিল্ক, কাতান ও প্রিমিয়াম খাদি পাঞ্জাবিকে টেকসই উপায়ে নতুন জীবন দিতে কাজ করছি আমরা।
               </p>

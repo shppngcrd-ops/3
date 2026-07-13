@@ -241,7 +241,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   "stock" numeric,
   "rating" numeric,
   "reviews" jsonb,
-  "dateAdded" text
+  "dateAdded" text,
+  "sellerName" text
 );
 
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -282,16 +283,28 @@ ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public access (anon clients)
+DROP POLICY IF EXISTS "Allow public read" ON public.products;
 CREATE POLICY "Allow public read" ON public.products FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow public write" ON public.products;
 CREATE POLICY "Allow public write" ON public.products FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow public read" ON public.orders;
 CREATE POLICY "Allow public read" ON public.orders FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow public write" ON public.orders;
 CREATE POLICY "Allow public write" ON public.orders FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow public read" ON public.coupons;
 CREATE POLICY "Allow public read" ON public.coupons FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow public write" ON public.coupons;
 CREATE POLICY "Allow public write" ON public.coupons FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Allow public read" ON public.admin_settings;
 CREATE POLICY "Allow public read" ON public.admin_settings FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow public write" ON public.admin_settings;
 CREATE POLICY "Allow public write" ON public.admin_settings FOR ALL USING (true);
     `
   };
@@ -438,16 +451,28 @@ app.post('/api/products', async (req, res) => {
       dateAdded: new Date().toISOString().split('T')[0],
       ...req.body,
     };
-    products.unshift(newProduct);
 
     if (supabase) {
       try {
-        await withTimeout(supabase.from('products').insert(newProduct), 2000);
+        const { error } = await withTimeout(supabase.from('products').insert(newProduct), 3000);
+        if (error) {
+          console.error('❌ Supabase insert product failed:', error);
+          let userFriendlyMessage = `Supabase Error: ${error.message}`;
+          
+          if (error.message.includes('column') || error.message.includes('relation') || error.message.includes('does not exist')) {
+            userFriendlyMessage = `আপনার Supabase ডাটাবেজ কলাম অমিল! আপনার ডাটাবেজ টেবিলগুলোতে প্রয়োজনীয় কলাম নেই (যেমন: sellerName, brand, বা অন্যান্য)। দয়া করে আপনার Supabase SQL Editor-এ গিয়ে Admin Panel-এ দেওয়া "SQL Guide" এর সম্পূর্ণ স্ক্রিপ্টটি রান করে নিন!`;
+          } else if (error.message.includes('API key') || error.status === 401) {
+            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! আপনার Vercel বা হোস্টিং এনভায়রনমেন্ট ভেরিয়েবল-এ SUPABASE_URL এবং SUPABASE_ANON_KEY সঠিক সেট করা আছে কিনা তা নিশ্চিত করুন।`;
+          }
+          return res.status(500).json({ success: false, error: userFriendlyMessage });
+        }
       } catch (e) {
-        console.error('Supabase insert product failed:', e);
+        console.error('❌ Supabase insert product failed with exception:', e);
+        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন বা টাইমআউট এরর: ${(e as Error).message}` });
       }
     }
 
+    products.unshift(newProduct);
     res.status(201).json({ success: true, data: newProduct });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
@@ -458,16 +483,24 @@ app.put('/api/products/:id', async (req, res) => {
   const { id } = req.params;
   const index = products.findIndex((p) => p.id === id);
   if (index !== -1) {
-    products[index] = { ...products[index], ...req.body };
-
     if (supabase) {
       try {
-        await withTimeout(supabase.from('products').update(req.body).eq('id', id), 2000);
+        const { error } = await withTimeout(supabase.from('products').update(req.body).eq('id', id), 3000);
+        if (error) {
+          console.error('❌ Supabase update product failed:', error);
+          let userFriendlyMessage = `Supabase Error: ${error.message}`;
+          if (error.message.includes('API key') || error.status === 401) {
+            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! হোস্টিং-এ SUPABASE_URL এবং SUPABASE_ANON_KEY চেক করুন।`;
+          }
+          return res.status(500).json({ success: false, error: userFriendlyMessage });
+        }
       } catch (e) {
-        console.error('Supabase update product failed:', e);
+        console.error('❌ Supabase update product exception:', e);
+        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন টাইমআউট: ${(e as Error).message}` });
       }
     }
 
+    products[index] = { ...products[index], ...req.body };
     res.json({ success: true, data: products[index] });
   } else {
     res.status(404).json({ success: false, error: 'Product not found' });
@@ -476,16 +509,26 @@ app.put('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   const { id } = req.params;
-  const initialLength = products.length;
-  products = products.filter((p) => p.id !== id);
-  if (products.length < initialLength) {
+  const index = products.findIndex((p) => p.id === id);
+  if (index !== -1) {
     if (supabase) {
       try {
-        await withTimeout(supabase.from('products').delete().eq('id', id), 2000);
+        const { error } = await withTimeout(supabase.from('products').delete().eq('id', id), 3000);
+        if (error) {
+          console.error('❌ Supabase delete product failed:', error);
+          let userFriendlyMessage = `Supabase Error: ${error.message}`;
+          if (error.message.includes('API key') || error.status === 401) {
+            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! হোস্টিং-এ SUPABASE_URL এবং SUPABASE_ANON_KEY চেক করুন।`;
+          }
+          return res.status(500).json({ success: false, error: userFriendlyMessage });
+        }
       } catch (e) {
-        console.error('Supabase delete product failed:', e);
+        console.error('❌ Supabase delete product exception:', e);
+        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন টাইমআউট: ${(e as Error).message}` });
       }
     }
+
+    products.splice(index, 1);
     res.json({ success: true, message: 'Product deleted' });
   } else {
     res.status(404).json({ success: false, error: 'Product not found' });
@@ -552,16 +595,24 @@ app.post('/api/orders', async (req, res) => {
       }
     });
 
-    orders.unshift(newOrder);
-
     if (supabase) {
       try {
-        await withTimeout(supabase.from('orders').insert(newOrder), 2000);
+        const { error } = await withTimeout(supabase.from('orders').insert(newOrder), 3000);
+        if (error) {
+          console.error('❌ Supabase insert order failed:', error);
+          let userFriendlyMessage = `Supabase Error: ${error.message}`;
+          if (error.message.includes('API key') || error.status === 401) {
+            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! হোস্টিং-এ SUPABASE_URL এবং SUPABASE_ANON_KEY চেক করুন।`;
+          }
+          return res.status(500).json({ success: false, error: userFriendlyMessage });
+        }
       } catch (e) {
-        console.error('Supabase insert order failed:', e);
+        console.error('❌ Supabase insert order exception:', e);
+        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন টাইমআউট: ${(e as Error).message}` });
       }
     }
 
+    orders.unshift(newOrder);
     res.status(201).json({ success: true, data: newOrder });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
