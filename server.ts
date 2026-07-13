@@ -465,7 +465,12 @@ app.get('/api/products', async (req, res) => {
         2000
       );
       if (!error && data) {
-        products = data;
+        if (data.length > 0) {
+          products = data;
+        } else if (products.length === 0) {
+          // If Supabase returned empty but memory is also empty, seed with initial list
+          products = [...INITIAL_PRODUCTS];
+        }
       }
     } catch (e) {
       console.warn('⚠️ Supabase products fetch timed out or failed. Serving cache.');
@@ -484,28 +489,33 @@ app.post('/api/products', async (req, res) => {
       ...req.body,
     };
 
+    let savedToSupabase = false;
     if (supabase) {
       try {
         const { error } = await withTimeout(supabase.from('products').insert(newProduct), 3000);
         if (error) {
-          console.error('❌ Supabase insert product failed:', error);
-          let userFriendlyMessage = `Supabase Error: ${error.message}`;
-          
-          if (error.message.includes('column') || error.message.includes('relation') || error.message.includes('does not exist')) {
-            userFriendlyMessage = `আপনার Supabase ডাটাবেজ কলাম অমিল! আপনার ডাটাবেজ টেবিলগুলোতে প্রয়োজনীয় কলাম নেই (যেমন: sellerName, brand, বা অন্যান্য)। দয়া করে আপনার Supabase SQL Editor-এ গিয়ে Admin Panel-এ দেওয়া "SQL Guide" এর সম্পূর্ণ স্ক্রিপ্টটি রান করে নিন!`;
-          } else if (error.message.includes('API key') || error.status === 401) {
-            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! আপনার Vercel বা হোস্টিং এনভায়রনমেন্ট ভেরিয়েবল-এ SUPABASE_URL এবং SUPABASE_ANON_KEY সঠিক সেট করা আছে কিনা তা নিশ্চিত করুন।`;
-          }
-          return res.status(500).json({ success: false, error: userFriendlyMessage });
+          console.warn('❌ Supabase insert product failed (falling back to memory):', error.message);
+        } else {
+          savedToSupabase = true;
         }
       } catch (e) {
-        console.error('❌ Supabase insert product failed with exception:', e);
-        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন বা টাইমআউট এরর: ${(e as Error).message}` });
+        console.warn('❌ Supabase insert product exception (falling back to memory):', (e as Error).message);
       }
     }
 
-    products.unshift(newProduct);
-    res.status(201).json({ success: true, data: newProduct });
+    // Always add to the server-side in-memory store so the newly added product is instantly visible
+    // and remains functional during the active session even if Supabase is offline/unmigrated.
+    const exists = products.some((p) => p.id === newProduct.id);
+    if (!exists) {
+      products.unshift(newProduct);
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      data: newProduct, 
+      savedToSupabase,
+      message: savedToSupabase ? 'পণ্যটি সফলভাবে ডাটাবেজে যুক্ত হয়েছে।' : 'পণ্যটি সফলভাবে ইন-মেমোরিতে যুক্ত হয়েছে (Supabase কানেকশন বা টেবিল পলিসি অমিল থাকলে পরে SQL রান করে নিন)।'
+    });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -579,7 +589,11 @@ app.get('/api/orders', async (req, res) => {
         2000
       );
       if (!error && data) {
-        orders = data;
+        if (data.length > 0) {
+          orders = data;
+        } else if (orders.length === 0) {
+          orders = [...INITIAL_ORDERS];
+        }
       }
     } catch (e) {
       console.warn('⚠️ Supabase orders fetch timed out or failed. Serving cache.');
@@ -627,25 +641,32 @@ app.post('/api/orders', async (req, res) => {
       }
     });
 
+    let savedToSupabase = false;
     if (supabase) {
       try {
         const { error } = await withTimeout(supabase.from('orders').insert(newOrder), 3000);
         if (error) {
-          console.error('❌ Supabase insert order failed:', error);
-          let userFriendlyMessage = `Supabase Error: ${error.message}`;
-          if (error.message.includes('API key') || error.status === 401) {
-            userFriendlyMessage = `Supabase কানেকশন অথরাইজেশন ব্যর্থ! হোস্টিং-এ SUPABASE_URL এবং SUPABASE_ANON_KEY চেক করুন।`;
-          }
-          return res.status(500).json({ success: false, error: userFriendlyMessage });
+          console.warn('❌ Supabase insert order failed (falling back to memory):', error.message);
+        } else {
+          savedToSupabase = true;
         }
       } catch (e) {
-        console.error('❌ Supabase insert order exception:', e);
-        return res.status(500).json({ success: false, error: `ডাটাবেজ কানেকশন টাইমআউট: ${(e as Error).message}` });
+        console.warn('❌ Supabase insert order exception (falling back to memory):', (e as Error).message);
       }
     }
 
-    orders.unshift(newOrder);
-    res.status(201).json({ success: true, data: newOrder });
+    // Always append to in-memory order list
+    const exists = orders.some((o) => o.id === newOrder.id);
+    if (!exists) {
+      orders.unshift(newOrder);
+    }
+    
+    res.status(201).json({ 
+      success: true, 
+      data: newOrder,
+      savedToSupabase,
+      message: savedToSupabase ? 'অর্ডার সফলভাবে ডাটাবেজে সংরক্ষিত হয়েছে।' : 'অর্ডার সফলভাবে ইন-মেমোরিতে সম্পন্ন হয়েছে।'
+    });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }
