@@ -224,8 +224,9 @@ app.get('/api/supabase-status', async (req, res) => {
       admin_settings: false,
     },
     sqlGuide: `
--- RUN THIS SQL IN YOUR SUPABASE SQL EDITOR TO CREATE THE REQUIRED TABLES:
+-- RUN THIS SQL IN YOUR SUPABASE SQL EDITOR TO CREATE OR UPDATE THE REQUIRED TABLES:
 
+-- 1. Create Products Table
 CREATE TABLE IF NOT EXISTS public.products (
   "id" text PRIMARY KEY,
   "name" text NOT NULL,
@@ -245,6 +246,23 @@ CREATE TABLE IF NOT EXISTS public.products (
   "sellerName" text
 );
 
+-- Safely add missing columns if the table already existed from a previous run
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "brand" text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "originalPrice" numeric;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "resellPrice" numeric;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "category" text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "condition" text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "images" jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "size" jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "color" jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "stock" numeric;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "rating" numeric;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "reviews" jsonb;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "dateAdded" text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS "sellerName" text;
+
+-- 2. Create Orders Table
 CREATE TABLE IF NOT EXISTS public.orders (
   "id" text PRIMARY KEY,
   "customerName" text NOT NULL,
@@ -263,6 +281,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
   "trackingCode" text
 );
 
+-- Safely add missing columns to orders if the table already existed
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "email" text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "district" text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "deliveryCharge" numeric;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "discount" numeric;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "paymentMethod" text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS "trackingCode" text;
+
+-- 3. Create Coupons Table
 CREATE TABLE IF NOT EXISTS public.coupons (
   "id" text PRIMARY KEY,
   "code" text NOT NULL UNIQUE,
@@ -271,18 +298,23 @@ CREATE TABLE IF NOT EXISTS public.coupons (
   "active" boolean DEFAULT true
 );
 
+-- Safely add missing columns to coupons if the table already existed
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS "active" boolean DEFAULT true;
+
+-- 4. Create Admin Settings Table
 CREATE TABLE IF NOT EXISTS public.admin_settings (
   "key" text PRIMARY KEY,
   "value" text
 );
 
--- Enable RLS and insert default admin password
+-- Enable RLS (Row Level Security)
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
 
--- Create policies for public access (anon clients)
+-- Recreate policies safely by dropping them first
 DROP POLICY IF EXISTS "Allow public read" ON public.products;
 CREATE POLICY "Allow public read" ON public.products FOR SELECT USING (true);
 
