@@ -72,6 +72,21 @@ async function syncFromSupabase() {
   }
   console.log('🔄 Syncing datasets from Supabase database in background...');
 
+  // Automatically delete any legacy demo/mock data from Supabase to provide a clean slate
+  try {
+    console.log('🧹 Cleaning up legacy demo/mock data from Supabase...');
+    const demoProdIds = ['prod-1', 'prod-2', 'prod-3', 'prod-4'];
+    const demoOrdIds = ['ord-1001'];
+    const demoCoupIds = ['coup-1', 'coup-2'];
+
+    await withTimeout(supabase.from('products').delete().in('id', demoProdIds), 3000);
+    await withTimeout(supabase.from('orders').delete().in('id', demoOrdIds), 3000);
+    await withTimeout(supabase.from('coupons').delete().in('id', demoCoupIds), 3000);
+    console.log('🧹 Legacy demo data cleanup completed successfully.');
+  } catch (err) {
+    console.warn('⚠️ Warning: Legacy demo cleanup encountered an issue:', (err as Error).message);
+  }
+
   // 1. Sync admin settings
   try {
     // Force write/upsert yasin as the active password in Supabase admin_settings

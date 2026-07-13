@@ -459,17 +459,14 @@ export default function App() {
               )}
             </div>
 
-            {/* Testimonials Banner Slider */}
+            {/* Elegant Brand Slogan Section */}
             <section className="bg-brand-maroon text-[#FCF9F5] py-16 px-4">
-              <div className="max-w-3xl mx-auto text-center space-y-6">
-                <h3 className="text-lg uppercase tracking-widest text-brand-gold font-bold">গ্রাহকদের মুখে আমাদের কথা</h3>
-                <blockquote className="text-xl sm:text-2xl font-serif font-light italic leading-relaxed">
-                  "বরণ ফ্যাশন থেকে লাল বেনারসি কাত্তান শাড়িটি কিনেছিলাম। রিসেল পণ্য হলেও সেলার কন্ডিশন একেবারে শো-রুম নতুনের মতো ছিল! সুতার বুনন নিখুঁত। ধন্যবাদ বরণ রিসেল!"
-                </blockquote>
-                <div className="space-y-0.5">
-                  <div className="font-bold text-sm">নুসরাত ফেরদৌস</div>
-                  <div className="text-xs text-[#FCF9F5]/60">ধানমন্ডি, ঢাকা</div>
-                </div>
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <h3 className="text-lg uppercase tracking-widest text-brand-gold font-bold">আমাদের মূল লক্ষ্য</h3>
+                <p className="text-xl sm:text-2xl font-serif font-light leading-relaxed">
+                  "বরণ রিসেল - পরিবেশবান্ধব উপায়ে ও সাশ্রয়ী মূল্যে আভিজাত্যময় প্রি-লাভড পোশাক ও অ্যাক্সেসরিজ পৌঁছে দিচ্ছে সবার কাছে।"
+                </p>
+                <div className="text-xs text-[#FCF9F5]/60">স্বচ্ছতা ও আভিজাত্যের বিশ্বস্ত মেলবন্ধন</div>
               </div>
             </section>
 
